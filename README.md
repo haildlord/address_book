@@ -10,7 +10,7 @@ A simple API for saving **Solana addresses** with names, like a phone contacts l
 
 On Solana, every wallet or account is identified by a long address like `GK8nnaKBfsD8v5WHUSvUnfkqPGGz9ZkWZAdVoDh1sGmh`. Nobody can remember these. This API lets you:
 
-- **Save contacts:** give an address a name. The API tells you whether it is a normal **wallet** or a **PDA** (a special account controlled by a program, not by a person).
+- **Save and edit contacts:** give an address a name, and rename or change it later. The API tells you whether it is a normal **wallet** or a **PDA** (a special account controlled by a program, not by a person).
 - **Find token accounts:** for a contact, work out their **associated token account (ATA)** for a token such as USDC.
 - **Verify ownership:** check that someone controls an address by checking a signature they made with their wallet.
 
@@ -62,6 +62,7 @@ npm start
 | GET | `/api/contacts?type=wallet\|pda` | List contacts, with an optional filter |
 | POST | `/api/contacts` | Save a contact: `{ "name", "address" }` |
 | GET | `/api/contacts/:id` | Get one contact |
+| PATCH | `/api/contacts/:id` | Update a contact: `{ "name"?, "address"? }` |
 | DELETE | `/api/contacts/:id` | Delete a contact |
 | POST | `/api/contacts/:id/derive-ata` | Get the token account: `{ "mintAddress" }` |
 | POST | `/api/verify-ownership` | Check a signature: `{ "address", "message", "signature" }` (base58) |
