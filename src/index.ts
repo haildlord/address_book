@@ -13,7 +13,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.use(logger());
 app.use("/api/*", secureHeaders());
-app.use("/api/*", cors({ allowMethods: ["GET", "POST", "DELETE", "OPTIONS"], maxAge: 600 }));
+app.use("/api/*", cors({ allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"], maxAge: 600 }));
 app.use(
   "/api/*",
   bodyLimit({ maxSize: 4 * 1024, onError: (c) => c.json({ success: false, message: "Request body too large" }, 413) }),

@@ -18,6 +18,7 @@ const ICON = {
   copy: '<path d="M8 8h11v11H8z"/><path d="M5 16V5h11"/>',
   check: '<path d="m5 13 4 4L19 7"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  edit: '<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
   trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3"/>',
   coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a1.5 1.5 0 0 1 0 3H9"/>',
 };
@@ -146,6 +147,7 @@ function contactRow(c) {
       <button class="icon-btn" data-action="copy" title="Copy address">${icon("copy")}</button>
       <a class="icon-btn" href="${explorer(c.address)}" target="_blank" rel="noopener noreferrer" title="View on Solana Explorer">${icon("external")}</a>
       <button class="btn-ghost !px-3 !py-1.5 text-xs" data-action="ata" title="Derive associated token account">${icon("coin", "size-3.5")} Derive ATA</button>
+      <button class="icon-btn" data-action="edit" title="Edit contact">${icon("edit")}</button>
       <button class="icon-btn hover:!bg-rose-500/10 hover:!text-rose-500" data-action="delete" title="Delete">${icon("trash")}</button>
     </div>
   </li>`;
@@ -237,6 +239,7 @@ $("#contact-list").addEventListener("click", async (e) => {
 
   if (btn.dataset.action === "copy") return copy(contact.address);
   if (btn.dataset.action === "ata") return openAta(contact);
+  if (btn.dataset.action === "edit") return openEdit(contact);
   if (btn.dataset.action === "delete") {
     if (!confirm(`Delete “${contact.name}”? This can't be undone.`)) return;
     try {
@@ -246,6 +249,51 @@ $("#contact-list").addEventListener("click", async (e) => {
     } catch (err) {
       toast(err.message, "error");
     }
+  }
+});
+
+// ---------- Edit modal ----------
+const editModal = $("#edit-modal");
+let editing = null;
+function openEdit(contact) {
+  editing = contact;
+  $("#edit-name").value = contact.name;
+  $("#edit-address").value = contact.address;
+  showError("#edit-error", "");
+  editModal.classList.remove("hidden");
+  editModal.classList.add("flex");
+  $("#edit-name").focus();
+}
+function closeEdit() {
+  editModal.classList.add("hidden");
+  editModal.classList.remove("flex");
+}
+$("#edit-close").addEventListener("click", closeEdit);
+$("#edit-cancel").addEventListener("click", closeEdit);
+editModal.addEventListener("click", (e) => { if (e.target === editModal) closeEdit(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeEdit(); });
+
+$("#edit-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const btn = e.submitter || $("button[type=submit]", e.target);
+  const name = $("#edit-name").value.trim();
+  const address = $("#edit-address").value.trim();
+  showError("#edit-error", "");
+  if (!name || !address) return showError("#edit-error", "Name and address are required.");
+  const body = {};
+  if (name !== editing.name) body.name = name;
+  if (address !== editing.address) body.address = address;
+  if (!Object.keys(body).length) return closeEdit();
+  setBusy(btn, true, "Saving…");
+  try {
+    const c = await api(`/contacts/${editing.id}`, { method: "PATCH", body });
+    closeEdit();
+    toast(`Updated “${c.name}”${c.type !== editing.type ? ` — now a ${c.type === "wallet" ? "wallet" : "PDA"}` : ""}`);
+    await loadContacts();
+  } catch (err) {
+    showError("#edit-error", err.message);
+  } finally {
+    setBusy(btn, false);
   }
 });
 
