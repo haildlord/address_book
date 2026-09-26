@@ -1,0 +1,22 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "address-book",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-09-21",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./public",
+		// Static frontend is served by Cloudflare directly; only /api/* runs the Hono Worker.
+		"run_worker_first": ["/api/*"]
+	},
+	"observability": { "enabled": true },
+	"upload_source_maps": true,
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "database-address-book",
+			"database_id": "6f6a3b36-8e8a-4805-b46b-9c23c63f6021"
+		}
+	]
+}

@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Address Book — Solana contacts, verified</title>
+  <meta name="description" content="A Solana address book that detects wallets vs PDAs, derives token accounts and PDAs, and verifies ed25519 signature ownership. Built with Hono on Cloudflare Workers + D1." />
+  <meta name="theme-color" content="#0a0a12" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236a2ff2'/%3E%3Cpath d='M9 10h14M9 16h14M9 22h9' stroke='white' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <script>
+    // Apply saved theme before paint to avoid a flash.
+    try {
+      const t = localStorage.getItem("theme");
+      if (t === "light") document.documentElement.classList.remove("dark");
+    } catch {}
+  </script>
+</head>
+<body class="min-h-screen">
+  <!-- Background glow -->
+  <div class="pointer-events-none fixed inset-0 -z-10 overflow-hidden" aria-hidden="true">
+    <div class="absolute -top-40 left-1/2 h-[520px] w-[900px] -translate-x-1/2 rounded-full bg-brand-500/20 blur-[120px] dark:bg-brand-500/25"></div>
+    <div class="absolute top-1/3 -right-40 h-[380px] w-[380px] rounded-full bg-emerald-400/10 blur-[110px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(100_116_139/0.15)_1px,transparent_0)] [background-size:28px_28px] [mask-image:linear-gradient(to_bottom,black,transparent_70%)]"></div>
+  </div>
+
+  <!-- Nav -->
+  <header class="sticky top-0 z-30 border-b border-slate-200/70 bg-slate-50/80 backdrop-blur-xl dark:border-white/10 dark:bg-[#0a0a12]/80">
+    <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+      <a href="#" class="flex items-center gap-2.5">
+        <span class="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-lg shadow-brand-600/30">
+          <svg viewBox="0 0 24 24" class="size-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        </span>
+        <span class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Address<span class="text-brand-500">Book</span></span>
+      </a>
+      <nav class="hidden items-center gap-1 text-sm font-medium text-slate-600 md:flex dark:text-slate-300">
+        <a href="#features" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Features</a>
+        <a href="#app" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Try it</a>
+        <a href="#api" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">API</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <span id="api-status" class="hidden items-center gap-2 rounded-full border border-slate-300/60 bg-slate-500/10 px-3 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">
+          <span class="relative flex size-2"><span id="api-dot-ping" class="absolute inline-flex size-full rounded-full opacity-75"></span><span id="api-dot" class="relative inline-flex size-2 rounded-full bg-slate-400"></span></span>
+          <span id="api-status-text">Connecting…</span>
+        </span>
+        <button id="theme-toggle" class="icon-btn size-9 border border-slate-200 dark:border-white/10" aria-label="Toggle theme">
+          <svg class="hidden size-4 dark:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg class="size-4 dark:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="mx-auto max-w-6xl px-4 pb-10 pt-16 text-center sm:px-6 sm:pt-24">
+      <div class="animate-fade-up mx-auto inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/10 px-3.5 py-1.5 text-xs font-semibold text-brand-700 dark:text-brand-300">
+        <svg class="size-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+        Powered by Hono · Cloudflare Workers · D1
+      </div>
+      <h1 class="animate-fade-up mx-auto mt-6 max-w-3xl text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-6xl dark:text-white">
+        The address book built for
+        <span class="bg-gradient-to-r from-brand-500 via-fuchsia-500 to-emerald-400 bg-clip-text text-transparent">Solana</span>
+      </h1>
+      <p class="animate-fade-up mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-400">
+        Save wallets and PDAs, tell them apart automatically, derive associated token accounts, and cryptographically verify who owns an address — all from one fast, edge-deployed API.
+      </p>
+      <div class="animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a href="#app" class="btn-primary px-6 py-3">Open the app
+          <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#api" class="btn-ghost px-6 py-3">View API reference</a>
+      </div>
+
+      <!-- Stats -->
+      <dl class="mx-auto mt-14 grid max-w-3xl grid-cols-3 gap-3 sm:gap-4">
+        <div class="card p-4 text-left sm:p-5">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Contacts</dt>
+          <dd id="stat-total" class="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">–</dd>
+        </div>
+        <div class="card p-4 text-left sm:p-5">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Wallets</dt>
+          <dd id="stat-wallet" class="mt-1 text-2xl font-bold text-emerald-600 sm:text-3xl dark:text-emerald-400">–</dd>
+        </div>
+        <div class="card p-4 text-left sm:p-5">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">PDAs</dt>
+          <dd id="stat-pda" class="mt-1 text-2xl font-bold text-amber-600 sm:text-3xl dark:text-amber-400">–</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- App -->
+    <section id="app" class="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 sm:px-6">
+      <div class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Workspace</h2>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Manage contacts and run on-chain tooling — no wallet or RPC needed.</p>
+        </div>
+        <div role="tablist" aria-label="Tools" class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/5">
+          <button role="tab" class="tab" data-tab="contacts" aria-selected="true">Contacts</button>
+          <button role="tab" class="tab" data-tab="pda" aria-selected="false">PDA</button>
+          <button role="tab" class="tab" data-tab="verify" aria-selected="false">Verify</button>
+        </div>
+      </div>
+
+      <!-- Contacts panel -->
+      <div id="panel-contacts" data-panel class="grid gap-6 lg:grid-cols-[360px_1fr]">
+        <form id="add-form" class="card h-fit p-5 sm:p-6" novalidate>
+          <h3 class="text-base font-semibold text-slate-900 dark:text-white">Add contact</h3>
+          <p class="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">We detect whether it's a wallet or a PDA using the ed25519 curve check.</p>
+          <div class="space-y-4">
+            <div>
+              <label class="label" for="add-name">Name</label>
+              <input id="add-name" class="input" maxlength="32" placeholder="e.g. Treasury" autocomplete="off" required />
+            </div>
+            <div>
+              <label class="label" for="add-address">Solana address</label>
+              <input id="add-address" class="input font-mono" placeholder="Base58 public key" autocomplete="off" spellcheck="false" required />
+            </div>
+            <p id="add-error" class="hidden rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400"></p>
+            <button id="add-submit" class="btn-primary w-full" type="submit">Save contact</button>
+            <button id="add-sample" class="w-full cursor-pointer text-center text-xs font-medium text-brand-600 hover:underline dark:text-brand-300" type="button">Fill with a sample address</button>
+          </div>
+        </form>
+
+        <div class="card overflow-hidden">
+          <div class="flex flex-col gap-3 border-b border-slate-200/80 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5 dark:border-white/10">
+            <div class="relative flex-1 sm:max-w-xs">
+              <svg class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+              <input id="search" class="input pl-9" type="search" placeholder="Search name or address…" autocomplete="off" />
+            </div>
+            <div id="filters" class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 text-sm dark:border-white/10 dark:bg-white/5">
+              <button class="tab !px-3 !py-1.5" data-filter="" aria-selected="true">All</button>
+              <button class="tab !px-3 !py-1.5" data-filter="wallet" aria-selected="false">Wallets</button>
+              <button class="tab !px-3 !py-1.5" data-filter="pda" aria-selected="false">PDAs</button>
+            </div>
+          </div>
+          <ul id="contact-list" class="divide-y divide-slate-200/80 dark:divide-white/10"></ul>
+        </div>
+      </div>
+
+      <!-- PDA panel -->
+      <div id="panel-pda" data-panel class="hidden">
+        <div class="grid gap-6 lg:grid-cols-2">
+          <form id="pda-form" class="card p-5 sm:p-6" novalidate>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Derive a PDA</h3>
+            <p class="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">Find the program derived address and canonical bump for a set of UTF-8 seeds.</p>
+            <div class="space-y-4">
+              <div>
+                <label class="label" for="pda-program">Program ID</label>
+                <input id="pda-program" class="input font-mono" spellcheck="false" autocomplete="off" value="ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL" />
+              </div>
+              <div>
+                <label class="label">Seeds <span class="normal-case tracking-normal text-slate-400">(max 32 bytes each)</span></label>
+                <div id="seed-list" class="space-y-2"></div>
+                <button id="seed-add" type="button" class="mt-2 cursor-pointer text-sm font-semibold text-brand-600 hover:underline dark:text-brand-300">+ Add seed</button>
+              </div>
+              <p id="pda-error" class="hidden rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400"></p>
+              <button class="btn-primary w-full" type="submit">Derive PDA</button>
+            </div>
+          </form>
+          <div class="card flex min-h-64 flex-col p-5 sm:p-6">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Result</h3>
+            <div id="pda-result" class="mt-4 flex flex-1 items-center justify-center text-center text-sm text-slate-400">Run a derivation to see the address and bump here.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verify panel -->
+      <div id="panel-verify" data-panel class="hidden">
+        <div class="grid gap-6 lg:grid-cols-2">
+          <form id="verify-form" class="card p-5 sm:p-6" novalidate>
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-base font-semibold text-slate-900 dark:text-white">Verify ownership</h3>
+                <p class="mb-5 mt-1 text-sm text-slate-500 dark:text-slate-400">Check that an address signed a message. Signature is base58.</p>
+              </div>
+              <div class="flex shrink-0 flex-col gap-2">
+                <button id="phantom-sign" type="button" class="btn-ghost !px-3 !py-2 text-xs">Sign with wallet</button>
+                <button id="v-example" type="button" class="btn-ghost !px-3 !py-2 text-xs">Load valid example</button>
+                <button id="v-tamper" type="button" class="btn-ghost !px-3 !py-2 text-xs">Load tampered example</button>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div>
+                <label class="label" for="v-address">Address</label>
+                <input id="v-address" class="input font-mono" spellcheck="false" autocomplete="off" placeholder="Signer public key" />
+              </div>
+              <div>
+                <label class="label" for="v-message">Message</label>
+                <textarea id="v-message" rows="3" class="input" placeholder="I own this address">I own this address</textarea>
+              </div>
+              <div>
+                <label class="label" for="v-signature">Signature</label>
+                <textarea id="v-signature" rows="3" class="input font-mono" spellcheck="false" placeholder="Base58 ed25519 signature"></textarea>
+              </div>
+              <p id="verify-error" class="hidden rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400"></p>
+              <button class="btn-primary w-full" type="submit">Verify signature</button>
+            </div>
+          </form>
+          <div class="card flex min-h-64 flex-col p-5 sm:p-6">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white">Result</h3>
+            <div id="verify-result" class="mt-4 flex flex-1 items-center justify-center text-center text-sm text-slate-400">
+              No wallet? Click “Load valid example” then “Verify signature” — or “Load tampered example” to see a failure. With Phantom/Solflare, use “Sign with wallet”.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="mx-auto max-w-6xl scroll-mt-24 px-4 py-16 sm:px-6">
+      <div class="mx-auto max-w-2xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Everything a Solana dev keeps re-implementing</h2>
+        <p class="mt-3 text-slate-600 dark:text-slate-400">A small, focused API with the primitives you actually need.</p>
+      </div>
+      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="card p-5">
+          <div class="mb-4 grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4M4 6v12a2 2 0 0 0 2 2h14v-4M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div>
+          <h3 class="font-semibold text-slate-900 dark:text-white">Wallet vs PDA detection</h3>
+          <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Every saved address is checked against the ed25519 curve and tagged automatically.</p>
+        </div>
+        <div class="card p-5">
+          <div class="mb-4 grid size-10 place-items-center rounded-xl bg-brand-500/10 text-brand-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a1.5 1.5 0 0 1 0 3H9"/></svg></div>
+          <h3 class="font-semibold text-slate-900 dark:text-white">Token account derivation</h3>
+          <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Derive the associated token account for any contact and mint — SPL Token or Token-2022.</p>
+        </div>
+        <div class="card p-5">
+          <div class="mb-4 grid size-10 place-items-center rounded-xl bg-amber-500/10 text-amber-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
+          <h3 class="font-semibold text-slate-900 dark:text-white">Ownership proofs</h3>
+          <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Verify detached ed25519 signatures so you know a counterparty really controls their key.</p>
+        </div>
+        <div class="card p-5">
+          <div class="mb-4 grid size-10 place-items-center rounded-xl bg-sky-500/10 text-sky-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></div>
+          <h3 class="font-semibold text-slate-900 dark:text-white">Edge-fast by default</h3>
+          <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Hono on Cloudflare Workers with D1 storage — globally deployed with zero servers to manage.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- API -->
+    <section id="api" class="mx-auto max-w-6xl scroll-mt-24 px-4 pb-20 pt-6 sm:px-6">
+      <div class="card overflow-hidden">
+        <div class="border-b border-slate-200/80 p-5 sm:p-6 dark:border-white/10">
+          <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">API reference</h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Base URL: <code id="api-base" class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs dark:bg-white/10"></code> · JSON in, JSON out.</p>
+        </div>
+        <div class="divide-y divide-slate-200/80 font-mono text-sm dark:divide-white/10">
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-sky-600 dark:text-sky-400">GET</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts?type=&amp;q=</span><span class="font-sans text-xs text-slate-500">List &amp; search contacts</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts</span><span class="font-sans text-xs text-slate-500">Create · {name, address}</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-sky-600 dark:text-sky-400">GET</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id</span><span class="font-sans text-xs text-slate-500">Fetch one contact</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-rose-600 dark:text-rose-400">DELETE</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id</span><span class="font-sans text-xs text-slate-500">Remove a contact</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id/derive-ata</span><span class="font-sans text-xs text-slate-500">{mintAddress, tokenProgram?}</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/derive-pda</span><span class="font-sans text-xs text-slate-500">{programId, seeds[]}</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/verify-ownership</span><span class="font-sans text-xs text-slate-500">{address, message, signature}</span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-slate-200/70 py-8 dark:border-white/10">
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 text-sm text-slate-500 sm:flex-row sm:px-6 dark:text-slate-400">
+      <p>© <span id="year"></span> AddressBook · Built with Hono, Tailwind CSS &amp; Cloudflare</p>
+      <p>Solana wallets, PDAs &amp; proofs.</p>
+    </div>
+  </footer>
+
+  <!-- ATA modal -->
+  <div id="ata-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-950/60 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="ata-title">
+    <div class="animate-pop card w-full max-w-lg bg-white p-5 shadow-2xl sm:p-6 dark:bg-[#12121c]">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 id="ata-title" class="text-lg font-semibold text-slate-900 dark:text-white">Derive token account</h3>
+          <p id="ata-owner" class="mt-1 text-sm text-slate-500 dark:text-slate-400"></p>
+        </div>
+        <button id="ata-close" class="icon-btn" aria-label="Close"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form id="ata-form" class="mt-5 space-y-4" novalidate>
+        <div>
+          <label class="label" for="ata-mint">Mint address</label>
+          <input id="ata-mint" class="input font-mono" spellcheck="false" autocomplete="off" placeholder="Token mint public key" />
+          <div class="mt-2 flex flex-wrap gap-2 text-xs">
+            <button type="button" data-mint="EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" class="cursor-pointer rounded-full border border-slate-200 px-2.5 py-1 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">USDC</button>
+            <button type="button" data-mint="Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB" class="cursor-pointer rounded-full border border-slate-200 px-2.5 py-1 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">USDT</button>
+            <button type="button" data-mint="So11111111111111111111111111111111111111112" class="cursor-pointer rounded-full border border-slate-200 px-2.5 py-1 font-medium text-slate-600 hover:bg-slate-50 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/5">wSOL</button>
+          </div>
+        </div>
+        <div>
+          <label class="label" for="ata-program">Token program</label>
+          <select id="ata-program" class="input">
+            <option value="token">SPL Token</option>
+            <option value="token-2022">Token-2022</option>
+          </select>
+        </div>
+        <p id="ata-error" class="hidden rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400"></p>
+        <div id="ata-result" class="hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"></div>
+        <button class="btn-primary w-full" type="submit">Derive ATA</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toasts" class="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2"></div>
+
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>

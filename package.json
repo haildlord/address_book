@@ -1,32 +1,28 @@
 {
-  "name": "address-book-node",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "address-book",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/node": "^26.6.2",
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "dev": "npm run css:build && wrangler dev",
+    "css:build": "tailwindcss -i ./src/styles.css -o ./public/assets/styles.css --minify",
+    "css:watch": "tailwindcss -i ./src/styles.css -o ./public/assets/styles.css --watch",
+    "build": "npm run css:build",
+    "deploy": "npm run css:build && wrangler deploy --minify",
+    "db:local": "wrangler d1 execute DB --local --file=./schema.sql",
+    "db:remote": "wrangler d1 execute DB --remote --file=./schema.sql",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
   "dependencies": {
-    "@solana/spl-token": "^0.4.15",
     "@solana/web3.js": "^1.99.0",
-    "@types/pg": "^8.23.1",
     "bs58": "^6.0.0",
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "pg": "^8.23.0",
+    "hono": "^4.13.8",
     "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.136.3"
   }
 }
