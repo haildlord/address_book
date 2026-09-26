@@ -13,7 +13,7 @@ A simple website and API for saving **Solana addresses** with names, like a phon
 
 On Solana, every wallet or account is identified by a long address like `GK8nnaKBfsD8v5WHUSvUnfkqPGGz9ZkWZAdVoDh1sGmh`. Nobody can remember these. This project lets you:
 
-- **Save contacts:** give an address a name, such as "Treasury". The app also tells you whether it is a normal **wallet** or a **PDA** (a special account controlled by a program, not by a person).
+- **Save and edit contacts:** give an address a name, such as "Treasury", and rename or change it later. The app also tells you whether it is a normal **wallet** or a **PDA** (a special account controlled by a program, not by a person).
 - **Find token accounts:** for any contact, work out their **associated token account (ATA)** for a token such as USDC. This is where their tokens are stored.
 - **Derive PDAs:** enter a program ID and some seed words, and get the PDA address and its bump number.
 - **Verify ownership:** check that someone really controls an address. They sign a message with their wallet, and the app checks the signature.
@@ -80,6 +80,7 @@ All endpoints start with `/api` and use JSON.
 | GET | `/api/contacts?type=wallet\|pda&q=text` | List contacts, with optional filter and search |
 | POST | `/api/contacts` | Save a contact: `{ "name", "address" }` |
 | GET | `/api/contacts/:id` | Get one contact |
+| PATCH | `/api/contacts/:id` | Update a contact: `{ "name"?, "address"? }` |
 | DELETE | `/api/contacts/:id` | Delete a contact |
 | POST | `/api/contacts/:id/derive-ata` | Get the token account: `{ "mintAddress", "tokenProgram"? }` |
 | POST | `/api/derive-pda` | Derive a PDA: `{ "programId", "seeds": [] }` |

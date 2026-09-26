@@ -81,6 +81,43 @@ contacts.get("/:id", async (c) => {
   return c.json({ contact: toContact(row) });
 });
 
+// PATCH /api/contacts/:id — rename and/or change the address (type is re-detected)
+contacts.patch("/:id", async (c) => {
+  const id = parseId(c.req.param("id"));
+  const body = await readJson<Partial<CreateContactBody>>(c);
+
+  const current = await c.env.DB.prepare("SELECT * FROM user_address_book WHERE id = ?").bind(id).first<ContactRow>();
+  if (!current) throw new AppError("Contact not found", 404);
+
+  let name = current.name;
+  if (body.name !== undefined) {
+    name = typeof body.name === "string" ? body.name.trim() : "";
+    if (!name) throw new AppError("name cannot be empty", 400);
+    if (name.length > MAX_NAME_LENGTH) throw new AppError(`name must be at most ${MAX_NAME_LENGTH} characters`, 400);
+  }
+
+  let address = current.address;
+  let type = current.type;
+  if (body.address !== undefined) {
+    address = typeof body.address === "string" ? body.address.trim() : "";
+    const key = parsePublicKey(address);
+    if (!key) throw new AppError("address is not a valid Solana public key", 400);
+    if (address !== current.address) {
+      const dup = await c.env.DB.prepare("SELECT id FROM user_address_book WHERE address = ? AND id != ?").bind(address, id).first();
+      if (dup) throw new AppError("address already exists", 409);
+      type = PublicKey.isOnCurve(key.toBytes()) ? "wallet" : "pda";
+    }
+  }
+
+  if (body.name === undefined && body.address === undefined) throw new AppError("nothing to update", 400);
+
+  const row = await c.env.DB.prepare("UPDATE user_address_book SET name = ?, address = ?, type = ? WHERE id = ? RETURNING *")
+    .bind(name, address, type, id)
+    .first<ContactRow>();
+  if (!row) throw new AppError("Contact not found", 404);
+  return c.json(toContact(row));
+});
+
 // DELETE /api/contacts/:id
 contacts.delete("/:id", async (c) => {
   const id = parseId(c.req.param("id"));

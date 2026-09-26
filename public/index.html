@@ -247,6 +247,7 @@
           <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts</span><span class="font-sans text-xs text-slate-500">Create · {name, address}</span></div>
           <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-sky-600 dark:text-sky-400">GET</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id</span><span class="font-sans text-xs text-slate-500">Fetch one contact</span></div>
           <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-rose-600 dark:text-rose-400">DELETE</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id</span><span class="font-sans text-xs text-slate-500">Remove a contact</span></div>
+          <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-amber-600 dark:text-amber-400">PATCH</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id</span><span class="font-sans text-xs text-slate-500">Update · {name?, address?}</span></div>
           <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/contacts/:id/derive-ata</span><span class="font-sans text-xs text-slate-500">{mintAddress, tokenProgram?}</span></div>
           <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/derive-pda</span><span class="font-sans text-xs text-slate-500">{programId, seeds[]}</span></div>
           <div class="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-6"><span class="w-16 font-bold text-emerald-600 dark:text-emerald-400">POST</span><span class="flex-1 text-slate-800 dark:text-slate-200">/api/verify-ownership</span><span class="font-sans text-xs text-slate-500">{address, message, signature}</span></div>
@@ -292,6 +293,34 @@
         <p id="ata-error" class="hidden rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400"></p>
         <div id="ata-result" class="hidden rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4"></div>
         <button class="btn-primary w-full" type="submit">Derive ATA</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit modal -->
+  <div id="edit-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-slate-950/60 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <div class="animate-pop card w-full max-w-lg bg-white p-5 shadow-2xl sm:p-6 dark:bg-[#12121c]">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h3 id="edit-title" class="text-lg font-semibold text-slate-900 dark:text-white">Edit contact</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Changing the address re-detects wallet vs PDA.</p>
+        </div>
+        <button id="edit-close" class="icon-btn" aria-label="Close"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <form id="edit-form" class="mt-5 space-y-4" novalidate>
+        <div>
+          <label class="label" for="edit-name">Name</label>
+          <input id="edit-name" class="input" maxlength="32" autocomplete="off" />
+        </div>
+        <div>
+          <label class="label" for="edit-address">Solana address</label>
+          <input id="edit-address" class="input font-mono" spellcheck="false" autocomplete="off" />
+        </div>
+        <p id="edit-error" class="hidden rounded-lg bg-rose-500/10 px-3 py-2 text-sm text-rose-600 dark:text-rose-400"></p>
+        <div class="flex gap-3">
+          <button type="button" id="edit-cancel" class="btn-ghost flex-1">Cancel</button>
+          <button type="submit" class="btn-primary flex-1">Save changes</button>
+        </div>
       </form>
     </div>
   </div>
