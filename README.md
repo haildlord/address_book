@@ -1,6 +1,8 @@
 # Address Book for Solana: Node.js + Express version
 
-> This is the **Express + PostgreSQL** version of the project. The newer **Hono + Cloudflare Workers** version, with a full website, lives on the `main` branch.
+> This is the **Express + PostgreSQL** version of the project. The newer **Hono + Cloudflare Workers** version, with a full website, lives on the [`main` branch](https://github.com/haildlord/address_book).
+>
+> **Live demo of the Hono version:** https://address-book.address-book.workers.dev
 
 A simple API for saving **Solana addresses** with names, like a phone contacts list, but for crypto.
 
@@ -16,7 +18,14 @@ It only does the maths, so it never connects to the Solana network.
 
 ## Built with
 
-Node.js, Express 5, TypeScript, PostgreSQL (`pg`), `@solana/web3.js`, `@solana/spl-token`, `tweetnacl`, `bs58`.
+[Node.js](https://nodejs.org), [Express 5](https://expressjs.com), TypeScript, [PostgreSQL](https://www.postgresql.org) (`pg`), `@solana/web3.js`, `@solana/spl-token`, `tweetnacl`, `bs58`.
+
+## Get the code
+
+```bash
+git clone -b express-node https://github.com/haildlord/address_book.git
+cd address_book
+```
 
 ## Run it on your computer
 
@@ -81,3 +90,8 @@ src/utils/AppError.ts Custom error class
 
 - The `name` column allows up to 10 characters.
 - `src/router/derivePDA.ts` exists but is not yet connected to the router. The Hono version on `main` connects it as `/api/derive-pda`.
+
+## Security
+
+- Your database password is read from `.env`, which is git-ignored. Never commit it.
+- All database queries are parameterised.
