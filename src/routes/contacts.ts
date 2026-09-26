@@ -6,6 +6,8 @@ import { parseId, readJson } from "../lib/http";
 import type { AddressType, Contact, ContactRow, CreateContactBody, DeriveAtaBody } from "../types";
 
 const MAX_NAME_LENGTH = 32;
+// Public demo: cap the table size so it can't be filled with junk.
+const MAX_CONTACTS = 200;
 
 const toContact = (row: ContactRow): Contact => ({
   id: row.id,
@@ -32,6 +34,9 @@ contacts.post("/", async (c) => {
   const existing = await c.env.DB.prepare("SELECT id FROM user_address_book WHERE address = ?").bind(address).first();
   if (existing) throw new AppError("address already exists", 409);
 
+  const count = await c.env.DB.prepare("SELECT COUNT(*) AS n FROM user_address_book").first<{ n: number }>();
+  if ((count?.n ?? 0) >= MAX_CONTACTS) throw new AppError(`Contact limit reached (${MAX_CONTACTS})`, 429);
+
   const type: AddressType = PublicKey.isOnCurve(key.toBytes()) ? "wallet" : "pda";
   const row = await c.env.DB.prepare("INSERT INTO user_address_book (name, address, type) VALUES (?, ?, ?) RETURNING *")
     .bind(name, address, type)
@@ -44,7 +49,7 @@ contacts.post("/", async (c) => {
 // GET /api/contacts?type=wallet|pda&q=search
 contacts.get("/", async (c) => {
   const type = c.req.query("type");
-  const q = c.req.query("q")?.trim();
+  const q = c.req.query("q")?.trim().slice(0, 64);
 
   if (type && type !== "wallet" && type !== "pda") throw new AppError("type must be 'wallet' or 'pda'", 400);
 
