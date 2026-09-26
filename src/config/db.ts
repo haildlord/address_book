@@ -1,11 +1,11 @@
 import pg from "pg";
 
 export const db = new pg.Client({
-    host : "localhost",
-    password: "Makechange@123",
-    port : 5432,
-    database : "address-book",
-    user : "postgres"
+    host : process.env.DB_HOST ?? "localhost",
+    password: process.env.DB_PASSWORD,
+    port : Number(process.env.DB_PORT ?? 5432),
+    database : process.env.DB_NAME ?? "address-book",
+    user : process.env.DB_USER ?? "postgres"
 });
 
 db.connect();
