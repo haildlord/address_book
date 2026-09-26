@@ -109,6 +109,26 @@ function selectTab(name) {
 }
 $$("[data-tab]").forEach((b) => b.addEventListener("click", () => selectTab(b.dataset.tab)));
 
+// Links and cards with data-goto open a tool and scroll to the workspace.
+const TABS = ["contacts", "pda", "verify"];
+function goto(name) {
+  selectTab(name);
+  $("#app").scrollIntoView({ behavior: "smooth" });
+}
+$$("[data-goto]").forEach((a) =>
+  a.addEventListener("click", (e) => {
+    e.preventDefault();
+    const name = a.dataset.goto;
+    history.replaceState(null, "", name === "contacts" ? "#app" : `#${name}`);
+    goto(name);
+  }),
+);
+const fromHash = () => {
+  const name = location.hash.slice(1);
+  if (TABS.includes(name)) goto(name);
+};
+window.addEventListener("hashchange", fromHash);
+
 // ---------- contacts ----------
 function renderStats() {
   const all = state.allContacts;
@@ -453,5 +473,6 @@ $("#v-example").addEventListener("click", () => loadExample(false));
 $("#v-tamper").addEventListener("click", () => loadExample(true));
 
 // ---------- boot ----------
+fromHash();
 checkHealth();
 loadContacts({ initial: true });

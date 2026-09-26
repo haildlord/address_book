@@ -32,7 +32,9 @@
       </a>
       <nav class="hidden items-center gap-1 text-sm font-medium text-slate-600 md:flex dark:text-slate-300">
         <a href="#features" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Features</a>
-        <a href="#app" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Try it</a>
+        <a href="#app" data-goto="contacts" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Contacts</a>
+        <a href="#pda" data-goto="pda" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Derive PDA</a>
+        <a href="#verify" data-goto="verify" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">Verify Signature</a>
         <a href="#api" class="rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/5">API</a>
       </nav>
       <div class="flex items-center gap-2">
@@ -66,7 +68,8 @@
         <a href="#app" class="btn-primary px-6 py-3">Open the app
           <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </a>
-        <a href="#api" class="btn-ghost px-6 py-3">View API reference</a>
+        <a href="#pda" data-goto="pda" class="btn-ghost px-6 py-3">Derive a PDA</a>
+        <a href="#verify" data-goto="verify" class="btn-ghost px-6 py-3">Verify a signature</a>
       </div>
 
       <!-- Stats -->
@@ -88,16 +91,23 @@
 
     <!-- App -->
     <section id="app" class="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 sm:px-6">
-      <div class="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Workspace</h2>
-          <p class="text-sm text-slate-500 dark:text-slate-400">Manage contacts and run on-chain tooling — no wallet or RPC needed.</p>
-        </div>
-        <div role="tablist" aria-label="Tools" class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/5">
-          <button role="tab" class="tab" data-tab="contacts" aria-selected="true">Contacts</button>
-          <button role="tab" class="tab" data-tab="pda" aria-selected="false">PDA</button>
-          <button role="tab" class="tab" data-tab="verify" aria-selected="false">Verify</button>
-        </div>
+      <div class="mb-6">
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Workspace</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Pick a tool. No wallet or RPC needed &mdash; everything runs on the edge.</p>
+      </div>
+      <div role="tablist" aria-label="Tools" class="mb-6 grid gap-3 sm:grid-cols-3">
+        <button role="tab" class="tabcard" data-tab="contacts" aria-selected="true">
+          <span class="tabcard-icon bg-emerald-500/10 text-emerald-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></span>
+          <span class="text-left"><span class="block text-sm font-semibold">Contacts</span><span class="block text-xs opacity-70">Save, edit, search &amp; derive ATAs</span></span>
+        </button>
+        <button role="tab" class="tabcard" data-tab="pda" aria-selected="false">
+          <span class="tabcard-icon bg-brand-500/10 text-brand-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg></span>
+          <span class="text-left"><span class="block text-sm font-semibold">Derive PDA</span><span class="block text-xs opacity-70">POST /api/derive-pda</span></span>
+        </button>
+        <button role="tab" class="tabcard" data-tab="verify" aria-selected="false">
+          <span class="tabcard-icon bg-amber-500/10 text-amber-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span class="text-left"><span class="block text-sm font-semibold">Verify Signature</span><span class="block text-xs opacity-70">POST /api/verify-ownership</span></span>
+        </button>
       </div>
 
       <!-- Contacts panel -->
@@ -211,22 +221,27 @@
         <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Everything a Solana dev keeps re-implementing</h2>
         <p class="mt-3 text-slate-600 dark:text-slate-400">A small, focused API with the primitives you actually need.</p>
       </div>
-      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="card p-5">
+      <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <a href="#app" data-goto="contacts" class="card block p-5 transition hover:-translate-y-0.5 hover:border-brand-500/40">
           <div class="mb-4 grid size-10 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V8H6a2 2 0 0 1 0-4h12v4M4 6v12a2 2 0 0 0 2 2h14v-4M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div>
           <h3 class="font-semibold text-slate-900 dark:text-white">Wallet vs PDA detection</h3>
           <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Every saved address is checked against the ed25519 curve and tagged automatically.</p>
-        </div>
-        <div class="card p-5">
+        </a>
+        <a href="#app" data-goto="contacts" class="card block p-5 transition hover:-translate-y-0.5 hover:border-brand-500/40">
           <div class="mb-4 grid size-10 place-items-center rounded-xl bg-brand-500/10 text-brand-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h4.5a1.5 1.5 0 0 1 0 3H9"/></svg></div>
           <h3 class="font-semibold text-slate-900 dark:text-white">Token account derivation</h3>
           <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Derive the associated token account for any contact and mint — SPL Token or Token-2022.</p>
-        </div>
-        <div class="card p-5">
+        </a>
+        <a href="#verify" data-goto="verify" class="card block p-5 transition hover:-translate-y-0.5 hover:border-brand-500/40">
           <div class="mb-4 grid size-10 place-items-center rounded-xl bg-amber-500/10 text-amber-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
           <h3 class="font-semibold text-slate-900 dark:text-white">Ownership proofs</h3>
           <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Verify detached ed25519 signatures so you know a counterparty really controls their key.</p>
-        </div>
+        </a>
+        <a href="#pda" data-goto="pda" class="card block p-5 transition hover:-translate-y-0.5 hover:border-brand-500/40">
+          <div class="mb-4 grid size-10 place-items-center rounded-xl bg-fuchsia-500/10 text-fuchsia-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 12v10"/></svg></div>
+          <h3 class="font-semibold text-slate-900 dark:text-white">PDA derivation</h3>
+          <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Enter a program ID and seeds to get the program derived address and its canonical bump.</p>
+        </a>
         <div class="card p-5">
           <div class="mb-4 grid size-10 place-items-center rounded-xl bg-sky-500/10 text-sky-500"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg></div>
           <h3 class="font-semibold text-slate-900 dark:text-white">Edge-fast by default</h3>
