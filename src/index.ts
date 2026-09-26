@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
+import { bodyLimit } from "hono/body-limit";
 import { HTTPException } from "hono/http-exception";
 import { AppError } from "./utility/AppError";
 import contacts from "./routes/contacts";
@@ -10,7 +12,12 @@ import pda from "./routes/pda";
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(logger());
-app.use("/api/*", cors());
+app.use("/api/*", secureHeaders());
+app.use("/api/*", cors({ allowMethods: ["GET", "POST", "DELETE", "OPTIONS"], maxAge: 600 }));
+app.use(
+  "/api/*",
+  bodyLimit({ maxSize: 4 * 1024, onError: (c) => c.json({ success: false, message: "Request body too large" }, 413) }),
+);
 
 // -------------------------------------------------------------
 // Routes

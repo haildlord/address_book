@@ -2,7 +2,12 @@
 
 A simple website and API for saving **Solana addresses** with names, like a phone contacts list, but for crypto.
 
-**Live demo:** https://address-book.address-book.workers.dev
+| | |
+| --- | --- |
+| **Live demo** | https://address-book.address-book.workers.dev |
+| **Health check** | https://address-book.address-book.workers.dev/api/health |
+| **Source code (this branch)** | https://github.com/haildlord/address_book |
+| **Express + PostgreSQL version** | https://github.com/haildlord/address_book/tree/express-node |
 
 ## What is this project?
 
@@ -17,7 +22,7 @@ Everything runs without a wallet or a connection to the Solana network. The app 
 
 ## Built with
 
-- [Hono](https://hono.dev): the backend web framework
+- [Hono](https://hono.dev) ([docs](https://hono.dev/docs)): the backend web framework
 - [Cloudflare Workers](https://workers.cloudflare.com) and [D1](https://developers.cloudflare.com/d1/): hosting and the SQLite database
 - [Tailwind CSS](https://tailwindcss.com): the design
 - `@solana/web3.js`, `tweetnacl` and `bs58`: the Solana maths
@@ -28,8 +33,8 @@ You need **Node.js 22 or newer**. A free [Cloudflare account](https://dash.cloud
 
 ```bash
 # 1. Get the code and install dependencies
-git clone <your-repo-url>
-cd address-book
+git clone https://github.com/haildlord/address_book.git
+cd address_book
 npm install
 
 # 2. Create the local database table
@@ -111,8 +116,16 @@ wrangler.jsonc     Cloudflare configuration
 | `npm run typecheck` | Check the TypeScript for errors |
 | `npm run deploy` | Build and deploy to Cloudflare |
 
+## Security
+
+- The website is served with a strict Content Security Policy and other security headers (`public/_headers`), and the API adds its own via Hono's `secureHeaders`.
+- Requests to the API are limited to 4 KB, all input is validated, and all database queries are parameterised.
+- The demo stores at most 200 contacts, so it can't be filled with junk.
+- No secrets live in the code. The Cloudflare login stays on your machine.
+- This demo has no user accounts, so anyone with the link can add or delete contacts. If you deploy it for real, put it behind [Cloudflare Access](https://developers.cloudflare.com/cloudflare-one/policies/access/) or add authentication.
+
 ## Good to know
 
 - The name of a contact can be up to 32 characters.
 - Saving the same address twice is rejected.
-- Anyone with the link can add or delete contacts in the demo. There are no user accounts yet, so don't store anything private.
+- Don't store anything private in the public demo.
