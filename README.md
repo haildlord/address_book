@@ -18,6 +18,8 @@ On Solana, every wallet or account is identified by a long address like `GK8nnaK
 - **Derive PDAs:** enter a program ID and some seed words, and get the PDA address and its bump number.
 - **Verify ownership:** check that someone really controls an address. They sign a message with their wallet, and the app checks the signature.
 
+On the website, each tool has its own big tab: **Contacts**, **Derive PDA** and **Verify Signature**. You can also link straight to one: `/#pda` or `/#verify`.
+
 Everything runs without a wallet or a connection to the Solana network. The app only does the maths.
 
 ## Built with
